@@ -3,6 +3,7 @@
 import requests
 from bs4 import BeautifulSoup
 import sqlite3
+from prettytable import from_db_cursor
 tmp=0
 t_name=0
 t_content=0
@@ -13,8 +14,6 @@ title=soup.find('h1',class_="core_title_txt")
 author=soup.find('div',class_="louzhubiaoshi",attrs={'author':True})
 name=soup.find_all('li',class_="d_name")
 content=soup.find_all('div',class_="d_post_content")
-print('标题：',title.get_text())
-print('作者：',author.attrs['author'])
 conn=sqlite3.connect("savedata.db")
 c=conn.cursor()
 c.execute("create table savedata(count,author,content)")
@@ -24,8 +23,10 @@ for i in range(len(name)):
     t_content=content[i].get_text().lstrip()
     c.execute("insert into savedata values (%d,'%s','%s')"%(tmp,t_name,t_content))
 c.execute("select * from savedata")
-result=c.fetchall()
-for row in result:
-    print("%d %s %s" % (row[0],row[1],row[2]))
+pt=from_db_cursor(c)
+result=pt.get_html_string(header=False,align="1")
+t=open("result_1.html",'w')
+t.write('标题：'+title.get_text()+'<hr/>'+'作者：'+author.attrs['author']+'<hr/>'+result)
+t.close()
 c.close()
 conn.close()
